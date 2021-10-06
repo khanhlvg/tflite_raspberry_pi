@@ -86,7 +86,7 @@ def run(model: str, camera_id: int, width: int, height: int,
       start_time = time.time()
 
     # Show the FPS
-    fps_text = 'FPS = ' + str(int(fps))
+    fps_text = 'FPS = {:.1f}'.format(fps)
     text_location = (left_margin, row_size)
     cv2.putText(image, fps_text, text_location, cv2.FONT_HERSHEY_PLAIN,
                 font_size, text_color, font_thickness)

@@ -13,18 +13,27 @@
 # limitations under the License.
 """Utility functions to display the pose detection results."""
 
-import math
-from typing import List, Tuple
+from typing import List
 
 import cv2
 from object_detector import Detection
 import numpy as np
+import platform
 
 _MARGIN = 10  # pixels
 _ROW_SIZE = 10  # pixels
 _FONT_SIZE = 1
 _FONT_THICKNESS = 1
 _TEXT_COLOR = (0, 0, 255)  # red
+
+
+def edgetpu_lib_name():
+  """Returns the library name of EdgeTPU in the current platform."""
+  return {
+    'Darwin': 'libedgetpu.1.dylib',
+    'Linux': 'libedgetpu.so.1',
+    'Windows': 'edgetpu.dll',
+  }.get(platform.system(), None)
 
 
 def visualize(

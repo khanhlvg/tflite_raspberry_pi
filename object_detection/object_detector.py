@@ -31,6 +31,8 @@ except ImportError:
   load_delegate = tf.lite.experimental.load_delegate
 # pylint: enable=g-import-not-at-top
 
+import utils
+
 
 class ObjectDetectorOptions(NamedTuple):
   """A config to initialize an object detector."""
@@ -95,8 +97,10 @@ class ObjectDetector:
 
     # Initialize TFLite model.
     if options.enable_edgetpu:
+      if utils.edgetpu_lib_name() is None:
+        raise Exception("The current OS isn't supported by Coral EdgeTPU.")
       interpreter = Interpreter(model_path=model_path,
-                                experimental_delegates=[load_delegate('libedgetpu.so.1.0')],
+                                experimental_delegates=[load_delegate(utils.edgetpu_lib_name())],
                                 num_threads=options.num_threads)
     else:
       interpreter = Interpreter(model_path=model_path, num_threads=options.num_threads)
