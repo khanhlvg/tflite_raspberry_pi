@@ -83,15 +83,15 @@ class ObjectDetector:
     try:
       with zipfile.ZipFile(model_path) as model_with_metadata:
         if len(model_with_metadata.namelist()) == 0:
-          print('ERROR: Invalid TFLite model: no label file found.')
+          raise ValueError('Invalid TFLite model: no label file found.')
 
         file_name = model_with_metadata.namelist()[0]
         with model_with_metadata.open(file_name) as label_file:
           label_list = label_file.read().splitlines()
           self._label_list = [label.decode('ascii') for label in label_list]
     except zipfile.BadZipFile:
-      print('ERROR: Invalid TFLite model: no metadata found. Please use models'
-            ' trained with Model Maker or downloaded from TensorFlow Hub.')
+      print('ERROR: Please use models trained with Model Maker or downloaded from TensorFlow Hub.')
+      raise ValueError('Invalid TFLite model: no metadata found.')
 
     # Initialize TFLite model.
     if options.enable_edgetpu:
