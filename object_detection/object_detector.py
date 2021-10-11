@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 from typing import List, NamedTuple
 import json
-from zipfile import ZipFile
+import zipfile
 
 # pylint: disable=g-import-not-at-top
 try:
@@ -80,15 +80,18 @@ class ObjectDetector:
     """
 
     # Load label list from metadata.
-    with ZipFile(model_path) as model_with_metadata:
-      if len(model_with_metadata.namelist()) == 0:
-        print('ERROR: TFLite model does not contain metadata file. Please use '
-              'models trained with Model Maker or downloaded from TensorFlow Hub.')
+    try:
+      with zipfile.ZipFile(model_path) as model_with_metadata:
+        if len(model_with_metadata.namelist()) == 0:
+          print('ERROR: Invalid TFLite model: no label file found.')
 
-      file_name = model_with_metadata.namelist()[0]
-      with model_with_metadata.open(file_name) as label_file:
-        label_list = label_file.read().splitlines()
-        self._label_list = [label.decode('ascii') for label in label_list]
+        file_name = model_with_metadata.namelist()[0]
+        with model_with_metadata.open(file_name) as label_file:
+          label_list = label_file.read().splitlines()
+          self._label_list = [label.decode('ascii') for label in label_list]
+    except zipfile.BadZipFile:
+      print('ERROR: Invalid TFLite model: no metadata found. Please use models'
+            ' trained with Model Maker or downloaded from TensorFlow Hub.')
 
     # Initialize TFLite model.
     if options.enable_edgetpu:
