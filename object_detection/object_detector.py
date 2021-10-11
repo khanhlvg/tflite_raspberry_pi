@@ -16,8 +16,8 @@
 import cv2
 import numpy as np
 from typing import List, NamedTuple
-from tflite_support import metadata
 import json
+from zipfile import ZipFile
 
 # pylint: disable=g-import-not-at-top
 try:
@@ -66,6 +66,11 @@ class Detection(NamedTuple):
 class ObjectDetector:
   """A wrapper class for a TFLite object detection model."""
 
+  _mean = 127.5
+  """Default mean normalization parameter for float model."""
+  _std = 127.5
+  """Default std normalization parameter for float model."""
+
   def __init__(self, model_path: str,
                options: ObjectDetectorOptions = ObjectDetectorOptions()) -> None:
     """Initialize a TFLite object detection model.
@@ -74,26 +79,16 @@ class ObjectDetector:
         options: The config to initialize an object detector. (Optional)
     """
 
-    # Load metadata from model.
-    displayer = metadata.MetadataDisplayer.with_model_file(model_path)
-
-    # Save model metadata for preprocessing later.
-    model_metadata = json.loads(displayer.get_metadata_json())
-    process_units = model_metadata['subgraph_metadata'][0]['input_tensor_metadata'][0]['process_units']
-    mean = 0.0
-    std = 1.0
-    for option in process_units:
-      if option['options_type'] == 'NormalizationOptions':
-        mean = option['options']['mean'][0]
-        std = option['options']['std'][0]
-    self._mean = mean
-    self._std = std
-
     # Load label list from metadata.
-    file_name = displayer.get_packed_associated_file_list()[0]
-    label_map_file = displayer.get_associated_file_buffer(file_name).decode()
-    label_list = list(filter(lambda x: len(x) > 0, label_map_file.splitlines()))
-    self._label_list = label_list
+    with ZipFile(model_path) as model_with_metadata:
+      if len(model_with_metadata.namelist()) == 0:
+        print('ERROR: TFLite model does not contain metadata file. Please use '
+              'models trained with Model Maker or downloaded from TensorFlow Hub.')
+
+      file_name = model_with_metadata.namelist()[0]
+      with model_with_metadata.open(file_name) as label_file:
+        label_list = label_file.read().splitlines()
+        self._label_list = [label.decode('ascii') for label in label_list]
 
     # Initialize TFLite model.
     if options.enable_edgetpu:
@@ -108,7 +103,7 @@ class ObjectDetector:
     interpreter.allocate_tensors()
     input_detail = interpreter.get_input_details()[0]
     self._input_size = input_detail['shape'][2], input_detail['shape'][1]
-    self._is_quantized_model = input_detail['dtype'] == np.uint8
+    self._is_quantized_input = input_detail['dtype'] == np.uint8
     self._interpreter = interpreter
     self._options = options
 
@@ -150,7 +145,7 @@ class ObjectDetector:
     input_tensor = cv2.resize(input_image, self._input_size)
 
     # Normalize the input if it's a float model (aka. not quantized)
-    if self._is_quantized_model is False:
+    if self._is_quantized_input is False:
       input_tensor = (np.float32(input_tensor) - self._mean) / self._std
 
     # Add batch dimension
