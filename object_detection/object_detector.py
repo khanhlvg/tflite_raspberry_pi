@@ -37,6 +37,9 @@ import utils
 class ObjectDetectorOptions(NamedTuple):
   """A config to initialize an object detector."""
 
+  enable_edgetpu: bool = False
+  """Enable the model to run on EdgeTPU."""
+
   label_allow_list: List[str] = None
   """The optional allow list of labels."""
 
@@ -52,9 +55,6 @@ class ObjectDetectorOptions(NamedTuple):
 
   score_threshold: float = 0.0
   """The score threshold of detection results to return."""
-
-  enable_edgetpu: bool = False
-  """Enable the model to run on EdgeTPU."""
 
 
 class Rect(NamedTuple):
