@@ -16,7 +16,6 @@
 import cv2
 import numpy as np
 from typing import List, NamedTuple
-import json
 import zipfile
 
 # pylint: disable=g-import-not-at-top
@@ -27,6 +26,7 @@ try:
 except ImportError:
   # If not, fallback to use the TFLite interpreter from the full TF package.
   import tensorflow as tf
+
   Interpreter = tf.lite.Interpreter
   load_delegate = tf.lite.experimental.load_delegate
 # pylint: enable=g-import-not-at-top
@@ -36,10 +36,19 @@ import utils
 
 class ObjectDetectorOptions(NamedTuple):
   """A config to initialize an object detector."""
+  label_allow_list: List[str] = None
+  """The optional allow list of labels."""
+  label_deny_list: List[str] = None
+  """The optional deny list of labels."""
   max_results: int = -1
+  """The maximum number of top-scored detection results to return."""
   num_threads: int = 1
+  """The number of threads to be used for TFLite ops that support
+  multi-threading when running inference with CPU."""
   score_threshold: float = 0.0
+  """The score threshold of detection results to return."""
   enable_edgetpu: bool = False
+  """Enable the model to run on EdgeTPU."""
 
 
 class Rect(NamedTuple):
@@ -204,9 +213,24 @@ class ObjectDetector:
       results, key=lambda detection: detection.categories[0].score, reverse=True
     )
 
+    # Filter out detections in deny list
+    filtered_results = sorted_results
+    if self._options.label_deny_list is not None:
+      filtered_results = list(filter(
+        lambda detection: detection.categories[0].label not in self._options.label_deny_list,
+        filtered_results
+      ))
+
+    # Keep only detections in allow list
+    if self._options.label_allow_list is not None:
+      filtered_results = list(filter(
+        lambda detection: detection.categories[0].label in self._options.label_allow_list,
+        filtered_results
+      ))
+
     # Only return maximum of max_results detection.
     if self._options.max_results > 0:
-      result_count = min(len(sorted_results), self._options.max_results)
-      sorted_results = sorted_results[:result_count]
+      result_count = min(len(filtered_results), self._options.max_results)
+      filtered_results = filtered_results[:result_count]
 
-    return sorted_results
+    return filtered_results
