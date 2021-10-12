@@ -36,17 +36,23 @@ import utils
 
 class ObjectDetectorOptions(NamedTuple):
   """A config to initialize an object detector."""
+
   label_allow_list: List[str] = None
   """The optional allow list of labels."""
+
   label_deny_list: List[str] = None
   """The optional deny list of labels."""
+
   max_results: int = -1
   """The maximum number of top-scored detection results to return."""
+
   num_threads: int = 1
   """The number of threads to be used for TFLite ops that support
   multi-threading when running inference with CPU."""
+
   score_threshold: float = 0.0
   """The score threshold of detection results to return."""
+
   enable_edgetpu: bool = False
   """Enable the model to run on EdgeTPU."""
 
