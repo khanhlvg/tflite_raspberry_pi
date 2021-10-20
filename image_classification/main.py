@@ -49,7 +49,7 @@ def run(model: str, labels: str, camera_id: int, width: int, height: int) -> Non
     text_color = (0, 0, 255)  # red
     font_size = 1
     font_thickness = 1
-    max_detection_results = 3
+    max_classification_results = 3
     fps_avg_frame_count = 10
   
     # Continuously capture images from the camera and run inference
@@ -65,7 +65,7 @@ def run(model: str, labels: str, camera_id: int, width: int, height: int) -> Non
         # List classification results
         categories = classifier.classify_image(image)
         # Show classification results on the image
-        for idx in range(max_detection_results):
+        for idx in range(max_classification_results):
             class_name = categories[idx].label
             probability = round(categories[idx].prob, 2)
             result_text = class_name + ' (' + str(probability) + ')'

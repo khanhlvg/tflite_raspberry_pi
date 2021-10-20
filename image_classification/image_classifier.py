@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Example using TF Lite to classify objects with the Raspberry Pi."""
 
 import numpy as np
 import cv2
@@ -82,6 +81,7 @@ class ImageClassifier(object):
         """Run classification on an input.
         Args:
             image: A [height, width, 3] RGB image.
+            top_k: max classification results.
         Returns: A list of prediction result. Sorted by probability descending.
         """
         image = self._preprocess(image)
