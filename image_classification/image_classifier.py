@@ -32,7 +32,7 @@ class Category(NamedTuple):
 class ImageClassifier(object):
     """A wrapper class for a TFLite image classification model."""
 
-    def __init__(self, model_name: str, label_file: str) -> None:
+    def __init__(self, model_path: str, label_file: str) -> None:
         """Initialize a image classification model.
 
         Args:
@@ -40,7 +40,7 @@ class ImageClassifier(object):
             label_file: Path of the label list file.
         """
 
-        interpreter = Interpreter(model_path=model_name, num_threads=4)
+        interpreter = Interpreter(model_path=model_path, num_threads=4)
         interpreter.allocate_tensors()
 
         self._input_index = interpreter.get_input_details()[0]['index']
@@ -53,7 +53,7 @@ class ImageClassifier(object):
 
         self._interpreter = interpreter
 
-        self._labels = self._load_labels(label_file)
+        self._labels_list = self._load_labels(label_file)
 
     def _load_labels(self, label_path: str) -> List[str]:
         """Load label list from file.
@@ -99,4 +99,4 @@ class ImageClassifier(object):
         prob_descending = sorted(
             range(len(output)), key=lambda k: output[k], reverse=True)
 
-        return [Category(label=self._labels[idx], prob=output[idx]) for idx in prob_descending[:top_k]]
+        return [Category(label=self._labels_list[idx], prob=output[idx]) for idx in prob_descending[:top_k]]
