@@ -16,7 +16,7 @@ if [ ! -f "$FILE" ]; then
     -L 'https://storage.googleapis.com/download.tensorflow.org/models/tflite/mobilenet_v1_1.0_224_quant_and_labels.zip' \
     -o ${FILE}
 fi
-# Unzip the TF Lite model and labels
+# Unzip the MobileNet TF Lite model and labels
 unzip mobilenet_v1_1.0_224_quant_and_labels.zip -d ${DATA_DIR}
 
 # Remove zip file
