@@ -77,11 +77,11 @@ class ImageClassifier(object):
         return image
 
 
-    def classify_image(self, image: np.ndarray, top_k: int = 3) -> List[Category]:
+    def classify_image(self, image: np.ndarray, max_results: int = 3) -> List[Category]:
         """Run classification on an input.
         Args:
             image: A [height, width, 3] RGB image.
-            top_k: max classification results.
+            max_results: max classification results.
         Returns: A list of prediction result. Sorted by probability descending.
         """
         image = self._preprocess(image)
@@ -99,4 +99,4 @@ class ImageClassifier(object):
         prob_descending = sorted(
             range(len(output)), key=lambda k: output[k], reverse=True)
 
-        return [Category(label=self._labels_list[idx], prob=output[idx]) for idx in prob_descending[:top_k]]
+        return [Category(label=self._labels_list[idx], prob=output[idx]) for idx in prob_descending[:max_results]]
