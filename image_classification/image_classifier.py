@@ -36,7 +36,7 @@ class ImageClassifier(object):
         """Initialize a image classification model.
 
         Args:
-            model_name: Name of the TFLite image classification model.
+            model_path: Path of the TFLite image classification model.
             label_file: Path of the label list file.
         """
 
