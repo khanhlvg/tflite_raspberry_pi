@@ -19,6 +19,7 @@ import zipfile
 import cv2
 import numpy as np
 import platform
+import time
 
 # pylint: disable=g-import-not-at-top
 try:
@@ -183,10 +184,15 @@ class ObjectDetector:
     Returns:
         A Person instance.
     """
+    start_time_frame = time.time()
+
+    start_time = time.time()
     image_height, image_width, _ = input_image.shape
-
     input_tensor = self._preprocess(input_image)
+    elapsed_time = int((time.time() - start_time) * 1000)
+    print('Preprocessing time: {0}ms'.format(elapsed_time))
 
+    start_time = time.time()
     self._set_input_tensor(input_tensor)
     self._interpreter.invoke()
 
@@ -196,8 +202,18 @@ class ObjectDetector:
     scores = self._get_output_tensor(self._OUTPUT_SCORE_NAME)
     count = int(self._get_output_tensor(self._OUTPUT_NUMBER_NAME))
 
-    return self._postprocess(boxes, classes, scores, count, image_width,
-                             image_height)
+    elapsed_time = int((time.time() - start_time) * 1000)
+    print('Inference time: {0}ms'.format(elapsed_time))
+
+    start_time = time.time()
+    detections = self._postprocess(boxes, classes, scores, count, image_width, image_height)
+    elapsed_time = int((time.time() - start_time) * 1000)
+    print('Post-processing time: {0}ms'.format(elapsed_time))
+
+    elapsed_time = int((time.time() - start_time_frame) * 1000)
+    print('Time per frame: {0}ms'.format(elapsed_time))
+    print()
+    return detections
 
   def _preprocess(self, input_image: np.ndarray) -> np.ndarray:
     """Preprocess the input image as required by the TFLite model."""
