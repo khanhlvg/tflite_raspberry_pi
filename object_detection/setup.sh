@@ -20,7 +20,7 @@ fi
 FILE=${DATA_DIR}/efficientdet_lite0_edgetpu.tflite
 if [ ! -f "$FILE" ]; then
   curl \
-    -L 'https://https://storage.googleapis.com/download.tensorflow.org/models/tflite/edgetpu/efficientdet_lite0_320_ptq_edgetpu.tflite' \
+    -L 'https://storage.googleapis.com/download.tensorflow.org/models/tflite/edgetpu/efficientdet_lite0_320_ptq_edgetpu.tflite' \
     -o ${FILE}
 fi
 
