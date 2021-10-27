@@ -39,7 +39,7 @@ def run(model: str, camera_id: int, width: int, height: int,
 
   # Variables to calculate FPS
   counter, fps = 0, 0
-  start_time = time.time()
+  start_time_fps = time.time()
 
   # Start capturing video input from the camera
   cap = cv2.VideoCapture(camera_id)
@@ -64,6 +64,9 @@ def run(model: str, camera_id: int, width: int, height: int,
 
   # Continuously capture images from the camera and run inference
   while cap.isOpened():
+    start_time_frame = time.time()
+
+    start_time = time.time()
     success, image = cap.read()
     if not success:
       sys.exit(
@@ -73,17 +76,21 @@ def run(model: str, camera_id: int, width: int, height: int,
     counter += 1
     image = cv2.flip(image, 1)
 
+    elapsed_time = int((time.time() - start_time) * 1000)
+    print('OpenCV read image time: {0}ms'.format(elapsed_time))
+
     # Run object detection estimation using the model.
     detections = detector.detect(image)
 
+    start_time = time.time()
     # Draw keypoints and edges on input image
     image = utils.visualize(image, detections)
 
     # Calculate the FPS
     if counter % fps_avg_frame_count == 0:
-      end_time = time.time()
-      fps = fps_avg_frame_count / (end_time - start_time)
-      start_time = time.time()
+      end_time_fps = time.time()
+      fps = fps_avg_frame_count / (end_time_fps - start_time_fps)
+      start_time_fps = time.time()
 
     # Show the FPS
     fps_text = 'FPS = {:.1f}'.format(fps)
@@ -91,10 +98,17 @@ def run(model: str, camera_id: int, width: int, height: int,
     cv2.putText(image, fps_text, text_location, cv2.FONT_HERSHEY_PLAIN,
                 font_size, text_color, font_thickness)
 
+    cv2.imshow('object_detector', image)
+    elapsed_time = int((time.time() - start_time) * 1000)
+    print('Visualization time: {0}ms'.format(elapsed_time))
+
+    elapsed_time = int((time.time() - start_time_frame) * 1000)
+    print('Time per frame (end-to-end): {0}ms'.format(elapsed_time))
+    print()
+
     # Stop the program if the ESC key is pressed.
     if cv2.waitKey(1) == 27:
       break
-    cv2.imshow('object_detector', image)
 
   cap.release()
   cv2.destroyAllWindows()

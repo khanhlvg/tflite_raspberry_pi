@@ -211,8 +211,7 @@ class ObjectDetector:
     print('Post-processing time: {0}ms'.format(elapsed_time))
 
     elapsed_time = int((time.time() - start_time_frame) * 1000)
-    print('Time per frame: {0}ms'.format(elapsed_time))
-    print()
+    print('Time per frame (object_detector): {0}ms'.format(elapsed_time))
     return detections
 
   def _preprocess(self, input_image: np.ndarray) -> np.ndarray:
