@@ -45,6 +45,7 @@ def run(model: str, camera_id: int, width: int, height: int,
   cap = cv2.VideoCapture(camera_id)
   cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
   cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+  cap.set(cv2.CAP_PROP_BUFFERSIZE, 2)
 
   # Visualization parameters
   row_size = 20  # pixels
@@ -52,7 +53,6 @@ def run(model: str, camera_id: int, width: int, height: int,
   text_color = (0, 0, 255)  # red
   font_size = 1
   font_thickness = 1
-  max_detection_results = 3
   fps_avg_frame_count = 10
 
   # Initialize the object detection model
@@ -75,12 +75,14 @@ def run(model: str, camera_id: int, width: int, height: int,
 
     counter += 1
     image = cv2.flip(image, 1)
-
     elapsed_time = int((time.time() - start_time) * 1000)
     print('OpenCV read image time: {0}ms'.format(elapsed_time))
 
     # Run object detection estimation using the model.
+    start_time = time.time()
     detections = detector.detect(image)
+    elapsed_time = int((time.time() - start_time) * 1000)
+    print('Inference time: {0}ms'.format(elapsed_time))
 
     start_time = time.time()
     # Draw keypoints and edges on input image
@@ -102,13 +104,16 @@ def run(model: str, camera_id: int, width: int, height: int,
     elapsed_time = int((time.time() - start_time) * 1000)
     print('Visualization time: {0}ms'.format(elapsed_time))
 
-    elapsed_time = int((time.time() - start_time_frame) * 1000)
-    print('Time per frame (end-to-end): {0}ms'.format(elapsed_time))
-    print()
-
+    start_time = time.time()
     # Stop the program if the ESC key is pressed.
     if cv2.waitKey(1) == 27:
       break
+    elapsed_time = int((time.time() - start_time) * 1000)
+    print('Wait key time: {0}ms'.format(elapsed_time))
+
+    elapsed_time = int((time.time() - start_time_frame) * 1000)
+    print('Time per frame (end-to-end): {0}ms'.format(elapsed_time))
+    print()
 
   cap.release()
   cv2.destroyAllWindows()

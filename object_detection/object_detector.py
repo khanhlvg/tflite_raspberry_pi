@@ -182,17 +182,11 @@ class ObjectDetector:
           to the needs of the model within this function.
 
     Returns:
-        A Person instance.
+        A list of Detection instances detected from the image.
     """
-    start_time_frame = time.time()
-
-    start_time = time.time()
     image_height, image_width, _ = input_image.shape
     input_tensor = self._preprocess(input_image)
-    elapsed_time = int((time.time() - start_time) * 1000)
-    print('Preprocessing time: {0}ms'.format(elapsed_time))
 
-    start_time = time.time()
     self._set_input_tensor(input_tensor)
     self._interpreter.invoke()
 
@@ -202,16 +196,7 @@ class ObjectDetector:
     scores = self._get_output_tensor(self._OUTPUT_SCORE_NAME)
     count = int(self._get_output_tensor(self._OUTPUT_NUMBER_NAME))
 
-    elapsed_time = int((time.time() - start_time) * 1000)
-    print('Inference time: {0}ms'.format(elapsed_time))
-
-    start_time = time.time()
     detections = self._postprocess(boxes, classes, scores, count, image_width, image_height)
-    elapsed_time = int((time.time() - start_time) * 1000)
-    print('Post-processing time: {0}ms'.format(elapsed_time))
-
-    elapsed_time = int((time.time() - start_time_frame) * 1000)
-    print('Time per frame (object_detector): {0}ms'.format(elapsed_time))
     return detections
 
   def _preprocess(self, input_image: np.ndarray) -> np.ndarray:
