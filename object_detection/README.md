@@ -75,10 +75,10 @@ For more information about executing inferences with TensorFlow Lite, read
 [TensorFlow Lite inference](https://www.tensorflow.org/lite/guide/inference).
 
 
-## Speed up the inferencing time (optional)
+## Speed up model inference (optional)
 
 If you want to significantly speed up the inference time, you can attach an
-ML accelerator such as the [Coral USB Accelerator](
+[Coral USB Accelerator](
 https://coral.withgoogle.com/products/accelerator)—a USB accessory that adds
 the [Edge TPU ML accelerator](https://coral.withgoogle.com/docs/edgetpu/faq/)
 to any Linux-based system.
@@ -93,7 +93,7 @@ If you have a Coral USB Accelerator, you can run the sample with it enabled:
 
 ```
 python3 detect.py \
-  --enableEdgeTPU True
+  --enableEdgeTPU
   --model efficientdet_lite0_edgetpu.tflite
 ```
 
