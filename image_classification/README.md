@@ -47,7 +47,7 @@ git clone https://github.com/khanhlvg/tflite_raspberry_pi --depth 1
 ```
 
 Then use our script to install a couple Python packages, and
-download the MobileNet model and labels file:
+download the TFLite model:
 
 ```
 cd image_classification
@@ -60,14 +60,17 @@ sh setup.sh
 
 ```
 python3 main.py \
-  --model mobilenet_v1_1.0_224_quant.tflite \
-  --labels labels_mobilenet_quant_v1_224.txt
+  --model efficientnet_lite0
 ```
+*   You can optionally specify the `maxResults` parameter to try other list classification results:
+    *   Use values: A positive integer.
+    *   The default value is `3`.
 
-You should see the camera feed appear on the monitor attached to your Raspberry
-Pi. Put some objects in front of the camera, like a coffee mug or keyboard, and
-you'll see the predictions printed. It also prints the amount of time it took
-to perform each inference in milliseconds.
+```
+python3 main.py \
+  --model efficientnet_lite0 \
+  --maxResults 5
+```
 
 For more information about executing inferences with TensorFlow Lite, read
 [TensorFlow Lite inference](https://www.tensorflow.org/lite/guide/inference).
