@@ -19,20 +19,18 @@ import time
 from image_classifier import ImageClassifier
 
 
-def run(model: str, labels: str, camera_id: int, width: int, height: int) -> None:
+def run(model: str, max_results: int, camera_id: int, width: int, height: int) -> None:
     """Continuously run inference on images acquired from the camera.
 
     Args:
         model: Name of the TFLite image classification model.
-        labels: Path to the label file for the image classification model. Class
-    names are listed one name per line, in the same order as in the
-    classification model output.
+        max_results: Max of classification results.
         camera_id: The camera id to be passed to OpenCV.
         width: The width of the frame captured from the camera.
         height: The height of the frame captured from the camera.
     """
     # Initialize classifier
-    classifier = ImageClassifier(model, labels)
+    classifier = ImageClassifier(model)
 
     # Variables to calculate FPS
     counter, fps = 0, 0
@@ -49,7 +47,6 @@ def run(model: str, labels: str, camera_id: int, width: int, height: int) -> Non
     text_color = (0, 0, 255)  # red
     font_size = 1
     font_thickness = 1
-    max_classification_results = 3
     fps_avg_frame_count = 10
   
     # Continuously capture images from the camera and run inference
@@ -65,7 +62,7 @@ def run(model: str, labels: str, camera_id: int, width: int, height: int) -> Non
         # List classification results
         categories = classifier.classify_image(image)
         # Show classification results on the image
-        for idx in range(max_classification_results):
+        for idx in range(max_results):
             class_name = categories[idx].label
             probability = round(categories[idx].prob, 2)
             result_text = class_name + ' (' + str(probability) + ')'
@@ -101,9 +98,10 @@ def main():
       help='Name of image classification model.',
       required=False)
   parser.add_argument(
-      '--labels',
-      help='Label file for image classification.',
-      required=False)
+      '--maxResults',
+      help='Max of classification results',
+      required=False,
+      default=3)
   parser.add_argument(
       '--cameraId', help='Id of camera.', required=False, default=0)
   parser.add_argument(
@@ -118,7 +116,7 @@ def main():
       default=480)
   args = parser.parse_args()
 
-  run(args.model, args.labels, int(args.cameraId),
+  run(args.model, int(args.maxResults), int(args.cameraId),
       args.frameWidth, args.frameHeight)
 
 if __name__ == '__main__':

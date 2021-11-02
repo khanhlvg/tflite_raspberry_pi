@@ -14,6 +14,8 @@
 
 import numpy as np
 import cv2
+import os
+import zipfile
 from typing import NamedTuple, List
 
 try:
@@ -32,15 +34,19 @@ class Category(NamedTuple):
 class ImageClassifier(object):
     """A wrapper class for a TFLite image classification model."""
 
-    def __init__(self, model_path: str, label_file: str) -> None:
+    def __init__(self, model_name: str) -> None:
         """Initialize a image classification model.
 
         Args:
-            model_path: Path of the TFLite image classification model.
-            label_file: Path of the label list file.
+            model_name: Path of the TFLite image classification model.
         """
+        
+        # Append TFLITE extension to model_name if there's no extension
+        _, ext = os.path.splitext(model_name)
+        if not ext:
+            model_name += '.tflite'
 
-        interpreter = Interpreter(model_path=model_path, num_threads=4)
+        interpreter = Interpreter(model_path=model_name, num_threads=4)
         interpreter.allocate_tensors()
 
         self._input_index = interpreter.get_input_details()[0]['index']
@@ -50,19 +56,23 @@ class ImageClassifier(object):
         self._input_width = interpreter.get_input_details()[0]['shape'][2]
 
         self._is_quantized_model = interpreter.get_input_details()[0]['dtype'] == np.uint8
+        
+        # Load label list from metadata.
+        try:
+            with zipfile.ZipFile(model_name) as model_with_metadata:
+                if not model_with_metadata.namelist():
+                    raise ValueError('Invalid TFLite model: no label file found.')
+
+                file_name = model_with_metadata.namelist()[0]
+                with model_with_metadata.open(file_name) as label_file:
+                    label_list = label_file.read().splitlines()
+                    self._labels_list = [label.decode('ascii') for label in label_list]
+        except zipfile.BadZipFile:
+            print(
+                'ERROR: Please use models trained with Model Maker or downloaded from TensorFlow Hub.'
+            )
 
         self._interpreter = interpreter
-
-        self._labels_list = self._load_labels(label_file)
-
-    def _load_labels(self, label_path: str) -> List[str]:
-        """Load label list from file.
-        Args:
-            label_path: Full path of label file.
-        Returns: An array contains the list of labels.
-        """
-        with open(label_path, 'r') as f:
-            return [line.strip() for _, line in enumerate(f.readlines())]
 
 
     def _set_input_tensor(self, image: np.ndarray) -> None:
@@ -77,11 +87,10 @@ class ImageClassifier(object):
         return image
 
 
-    def classify_image(self, image: np.ndarray, max_results: int = 3) -> List[Category]:
+    def classify_image(self, image: np.ndarray) -> List[Category]:
         """Run classification on an input.
         Args:
             image: A [height, width, 3] RGB image.
-            max_results: max classification results.
         Returns: A list of prediction result. Sorted by probability descending.
         """
         image = self._preprocess(image)
@@ -99,4 +108,4 @@ class ImageClassifier(object):
         prob_descending = sorted(
             range(len(output)), key=lambda k: output[k], reverse=True)
 
-        return [Category(label=self._labels_list[idx], prob=output[idx]) for idx in prob_descending[:max_results]]
+        return [Category(label=self._labels_list[idx], prob=output[idx]) for idx in prob_descending]

@@ -9,24 +9,11 @@ fi
 # Install Python dependencies.
 python3 -m pip install -r requirements.txt
 
-# Download MobileNet TF Lite model and labels.
-FILE=${DATA_DIR}/mobilenet_v1_1.0_224_quant_and_labels.zip
+# Download TF Lite model with metadata.
+FILE=${DATA_DIR}/efficientnet_lite0.tflite
 if [ ! -f "$FILE" ]; then
   curl \
-    -L 'https://storage.googleapis.com/download.tensorflow.org/models/tflite/mobilenet_v1_1.0_224_quant_and_labels.zip' \
-    -o ${FILE}
-fi
-# Unzip the MobileNet TF Lite model and labels
-unzip mobilenet_v1_1.0_224_quant_and_labels.zip -d ${DATA_DIR}
-
-# Remove zip file
-rm mobilenet_v1_1.0_224_quant_and_labels.zip
-
-# Download MobileNet TF Lite edgetpu model.
-FILE=${DATA_DIR}/mobilenet_v1_1.0_224_quant_edgetpu.tflite
-if [ ! -f "$FILE" ]; then
-  curl \
-    -L 'https://dl.google.com/coral/canned_models/mobilenet_v1_1.0_224_quant_edgetpu.tflite' \
+    -L 'https://tfhub.dev/tensorflow/lite-model/efficientnet/lite0/uint8/2?lite-format=tflite' \
     -o ${FILE}
 fi
 
