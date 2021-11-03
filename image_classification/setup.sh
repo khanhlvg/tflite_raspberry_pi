@@ -18,7 +18,7 @@ if [ ! -f "$FILE" ]; then
     -o ${FILE}
 fi
 
-FILE=${DATA_DIR}/efficientdet_lite0_edgetpu.tflite
+FILE=${DATA_DIR}/efficientnet_lite0_edgetpu.tflite
 if [ ! -f "$FILE" ]; then
   curl \
     -L 'https://storage.googleapis.com/download.tensorflow.org/models/tflite/edgetpu/efficientdet_lite0_edgetpu_metadata.tflite' \
