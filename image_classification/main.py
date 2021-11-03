@@ -17,20 +17,29 @@ import argparse
 import cv2
 import time
 from image_classifier import ImageClassifier
+from image_classifier import ImageClassifierOptions
 
 
-def run(model: str, max_results: int, camera_id: int, width: int, height: int) -> None:
+def run(model: str, max_results: int, num_threads: int, enable_edgetpu: bool,
+        camera_id: int, width: int, height: int) -> None:
     """Continuously run inference on images acquired from the camera.
 
     Args:
         model: Name of the TFLite image classification model.
         max_results: Max of classification results.
+        num_threads: Number of CPU threads to run the model.
+        enable_edgetpu: Whether to run the model on EdgeTPU.
         camera_id: The camera id to be passed to OpenCV.
         width: The width of the frame captured from the camera.
         height: The height of the frame captured from the camera.
     """
-    # Initialize classifier
-    classifier = ImageClassifier(model)
+    
+    # Initialize the image classification model
+    options = ImageClassifierOptions(
+        num_threads=num_threads,
+        max_results=max_results,
+        enable_edgetpu=enable_edgetpu)
+    classifier = ImageClassifier(model, options)
 
     # Variables to calculate FPS
     counter, fps = 0, 0
@@ -60,11 +69,11 @@ def run(model: str, max_results: int, camera_id: int, width: int, height: int) -
         counter += 1
         image = cv2.flip(image, 1)
         # List classification results
-        categories = classifier.classify_image(image)
+        categories = classifier.classify(image)
         # Show classification results on the image
         for idx in range(max_results):
             class_name = categories[idx].label
-            probability = round(categories[idx].prob, 2)
+            probability = round(categories[idx].score, 2)
             result_text = class_name + ' (' + str(probability) + ')'
             text_location = (left_margin, (idx + 2) * row_size)
             cv2.putText(image, result_text, text_location, cv2.FONT_HERSHEY_PLAIN,
@@ -85,7 +94,7 @@ def run(model: str, max_results: int, camera_id: int, width: int, height: int) -
         # Stop the program if the ESC key is pressed.
         if cv2.waitKey(1) == 27:
             break
-        cv2.imshow('image', image)
+        cv2.imshow('image_classification', image)
 
     cap.release()
     cv2.destroyAllWindows()
@@ -99,9 +108,19 @@ def main():
       required=False)
   parser.add_argument(
       '--maxResults',
-      help='Max of classification results',
+      help='Max of classification results.',
       required=False,
       default=3)
+  parser.add_argument(
+      '--numThreads',
+      help='Number of CPU threads to run the model.',
+      required=False,
+      default=4)
+  parser.add_argument(
+      '--enableEdgeTpu',
+      help='Whether to run the model on EdgeTPU.',
+      required=False,
+      default=False)
   parser.add_argument(
       '--cameraId', help='Id of camera.', required=False, default=0)
   parser.add_argument(
@@ -116,8 +135,8 @@ def main():
       default=480)
   args = parser.parse_args()
 
-  run(args.model, int(args.maxResults), int(args.cameraId),
-      args.frameWidth, args.frameHeight)
+  run(args.model, int(args.maxResults), int(args.numThreads), bool(args.enableEdgeTpu),
+      int(args.cameraId), args.frameWidth, args.frameHeight)
 
 if __name__ == '__main__':
   main()
