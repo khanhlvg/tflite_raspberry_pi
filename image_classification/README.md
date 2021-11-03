@@ -90,7 +90,7 @@ If you have a Coral USB Accelerator, you can run the sample with it enabled:
 
 ```
 python3 main.py \
-  --model efficientdet_lite0_edgetpu.tflite \
+  --model efficientnet_lite0_edgetpu.tflite \
   --enableEdgeTPU True
 ```
 
