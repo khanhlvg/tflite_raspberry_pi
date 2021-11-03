@@ -72,5 +72,33 @@ python3 main.py \
   --maxResults 5
 ```
 
+## Speed up the inferencing time (optional)
+
+If you want to significantly speed up the inference time, you can attach an
+ML accelerator such as the [Coral USB Accelerator](
+https://coral.withgoogle.com/products/accelerator)—a USB accessory that adds
+the [Edge TPU ML accelerator](https://coral.withgoogle.com/docs/edgetpu/faq/)
+to any Linux-based system.
+
+If you have a Coral USB Accelerator, you can run the sample with it enabled:
+
+1.  First, be sure you have completed the [USB Accelerator setup instructions](
+    https://coral.withgoogle.com/docs/accelerator/get-started/).
+
+2.  Run the image classification script using the EdgeTPU TFLite model and enable 
+    the EdgeTPU option.   
+
+```
+python3 main.py \
+  --model efficientdet_lite0_edgetpu.tflite \
+  --enableEdgeTPU True
+```
+
+You should see significantly faster inference speeds.
+
+For more information about creating and running TensorFlow Lite models with
+Coral devices, read [TensorFlow models on the Edge TPU](
+https://coral.withgoogle.com/docs/edgetpu/models-intro/).
+
 For more information about executing inferences with TensorFlow Lite, read
 [TensorFlow Lite inference](https://www.tensorflow.org/lite/guide/inference).
