@@ -60,7 +60,7 @@ sh setup.sh
 
 ```
 python3 main.py \
-  --model efficientnet_lite0
+  --model efficientnet_lite0.tflite
 ```
 *   You can optionally specify the `maxResults` parameter to try other list classification results:
     *   Use values: A positive integer.
@@ -68,7 +68,7 @@ python3 main.py \
 
 ```
 python3 main.py \
-  --model efficientnet_lite0 \
+  --model efficientnet_lite0.tflite \
   --maxResults 5
 ```
 
