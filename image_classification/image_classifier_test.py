@@ -1,19 +1,3 @@
-# import cv2
-# from image_classifier import ImageClassifier
-# from image_classifier import ImageClassifierOptions
-
-# image = cv2.imread('fox.jpeg')
-# options = ImageClassifierOptions(
-#         num_threads=4,
-#         max_results=10,
-#         enable_edgetpu=False)
-# # classifier = ImageClassifier(model, options)
-
-# classifier = ImageClassifier('efficientnet_lite0.tflite', options)
-# categories = classifier.classify(image)
-# print(categories)
-
-
 # Copyright 2021 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
