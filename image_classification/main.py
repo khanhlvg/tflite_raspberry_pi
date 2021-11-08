@@ -14,8 +14,9 @@
 """Main script to run image classification."""
 
 import argparse
-import cv2
 import time
+
+import cv2
 from image_classifier import ImageClassifier
 from image_classifier import ImageClassifierOptions
 
@@ -71,10 +72,10 @@ def run(model: str, max_results: int, num_threads: int, enable_edgetpu: bool,
         # List classification results
         categories = classifier.classify(image)
         # Show classification results on the image
-        for idx in range(max_results):
-            class_name = categories[idx].label
-            probability = round(categories[idx].score, 2)
-            result_text = class_name + ' (' + str(probability) + ')'
+        for idx, category in enumerate(categories):
+            class_name = category.label
+            score = round(category.score, 2)
+            result_text = class_name + ' (' + str(score) + ')'
             text_location = (left_margin, (idx + 2) * row_size)
             cv2.putText(image, result_text, text_location, cv2.FONT_HERSHEY_PLAIN,
                         font_size, text_color, font_thickness)
