@@ -22,9 +22,9 @@ import image_classifier as ic
 _MODEL_FILE = 'efficientnet_lite0.tflite'
 _GROUND_TRUTH_FILE = 'test_data/ground_truth.csv'
 _IMAGE_FILE = 'test_data/fox.jpeg'
-_ALLOW_LIST = ['grey fox', 'red fox']
-_DENY_LIST = ['coyote']
-_SCORE_THRESHOLD = 0.1
+_ALLOW_LIST = ['red fox', 'kit fox']
+_DENY_LIST = ['grey fox']
+_SCORE_THRESHOLD = 0.01
 _MAX_RESULTS = 3
 
 
@@ -35,6 +35,7 @@ class ImageClassifierTest(unittest.TestCase):
     super().setUp()
     self._load_ground_truth()
     self.image = cv2.imread(_IMAGE_FILE)
+    self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
 
   def test_default_option(self):
     """Check if the default option works correctly."""
