@@ -106,7 +106,8 @@ def main():
   parser.add_argument(
       '--model',
       help='Name of image classification model.',
-      required=False)
+      required=False,
+      default='efficientnet_lite0.tflite')
   parser.add_argument(
       '--maxResults',
       help='Max of classification results.',
