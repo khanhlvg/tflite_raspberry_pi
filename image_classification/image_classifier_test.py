@@ -24,8 +24,9 @@ _GROUND_TRUTH_FILE = 'test_data/ground_truth.csv'
 _IMAGE_FILE = 'test_data/fox.jpeg'
 _ALLOW_LIST = ['red fox', 'kit fox']
 _DENY_LIST = ['grey fox']
-_SCORE_THRESHOLD = 0.01
+_SCORE_THRESHOLD = 0.2
 _MAX_RESULTS = 3
+_ACCEPTABLE_ERROR_RANGE = 0.01
 
 
 class ImageClassifierTest(unittest.TestCase):
@@ -47,7 +48,8 @@ class ImageClassifierTest(unittest.TestCase):
       is_gt_found = False
       for real_classification in categories:
         is_label_match = real_classification.label == gt_classification.label
-        is_score_match = real_classification.score == gt_classification.score
+        is_score_match = abs(
+            real_classification.score - gt_classification.score) < _ACCEPTABLE_ERROR_RANGE
 
         # If a matching classification is found, stop the loop.
         if is_label_match and is_score_match:

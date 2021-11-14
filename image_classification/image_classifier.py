@@ -158,7 +158,7 @@ class ImageClassifier(object):
         
         return self._postprocess(output_tensor)
         
-    def _postprocess(self, output_tensor) -> List[Category]:
+    def _postprocess(self, output_tensor: np.ndarray) -> List[Category]:
         """Post-process the output tensor into a list Category.
 
         Args:
@@ -194,6 +194,14 @@ class ImageClassifier(object):
                 filter(
                     lambda category: category.label in self._options.
                     label_allow_list, filtered_results))
+        
+        # Filter out classification in score threshold
+        if self._options.score_threshold is not None:
+            filtered_results = list(
+                filter(
+                    lambda category: category.score >= self.
+                    _options.score_threshold, filtered_results))
+            
         # Only return maximum of max_results classification.
         if self._options.max_results > 0:
             result_count = min(len(filtered_results), self._options.max_results)
