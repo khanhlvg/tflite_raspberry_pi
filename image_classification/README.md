@@ -2,7 +2,7 @@
 
 This example uses [TensorFlow Lite](https://tensorflow.org/lite) with Python
 on a Raspberry Pi to perform real-time image classification using images
-streamed from the Camera.
+streamed from the camera.
 
 At the end of this page, there are extra steps to accelerate the example using the Coral USB Accelerator, which increases the inference speed by ~10x.
 
@@ -59,7 +59,7 @@ sh setup.sh
 ## Run the example
 
 ```
-python3 main.py \
+python3 classify.py \
   --model efficientnet_lite0.tflite
 ```
 *   You can optionally specify the `maxResults` parameter to try other list classification results:
@@ -67,7 +67,7 @@ python3 main.py \
     *   The default value is `3`.
 
 ```
-python3 main.py \
+python3 classify.py \
   --model efficientnet_lite0.tflite \
   --maxResults 5
 ```
@@ -89,7 +89,7 @@ If you have a Coral USB Accelerator, you can run the sample with it enabled:
     the EdgeTPU option.   
 
 ```
-python3 main.py \
+python3 classify.py \
   --model efficientnet_lite0_edgetpu.tflite \
   --enableEdgeTPU True
 ```

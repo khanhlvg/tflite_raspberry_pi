@@ -29,6 +29,7 @@ except ImportError:
   Interpreter = tf.lite.Interpreter
   load_delegate = tf.lite.experimental.load_delegate
 
+
 class ImageClassifierOptions(NamedTuple):
     """A config to initialize an image classifier."""
 
@@ -141,7 +142,6 @@ class ImageClassifier(object):
             input_tensor = (np.float32(input_tensor) - self._mean) / self._std
         return input_tensor
 
-
     def classify(self, image: np.ndarray) -> List[Category]:
         """Run classification on an input.
         
@@ -171,13 +171,13 @@ class ImageClassifier(object):
         # If the model is quantized (uint8 data), then dequantize the results
         if self._is_quantized_output:
             scale, zero_point = self._output_details[0]['quantization']
-            output = scale * (output_tensor - zero_point)
+            output_tensor = scale * (output_tensor - zero_point)
 
         # Sort output by probability descending.
         prob_descending = sorted(
-            range(len(output)), key=lambda k: output[k], reverse=True)
+            range(len(output_tensor)), key=lambda k: output_tensor[k], reverse=True)
         
-        categories = [Category(label=self._labels_list[idx], score=output[idx])
+        categories = [Category(label=self._labels_list[idx], score=output_tensor[idx])
                       for idx in prob_descending]
         
         # Filter out classification in deny list

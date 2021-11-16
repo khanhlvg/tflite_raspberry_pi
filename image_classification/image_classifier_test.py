@@ -59,7 +59,6 @@ class ImageClassifierTest(unittest.TestCase):
       # If no matching classification found, fail the test.
       self.assertTrue(is_gt_found, '{0} not found.'.format(gt_classification))
 
-
   def test_allow_list(self):
     """Test the label_allow_list option."""
     option = ic.ImageClassifierOptions(label_allow_list=_ALLOW_LIST)
@@ -72,7 +71,6 @@ class ImageClassifierTest(unittest.TestCase):
           label, _ALLOW_LIST,
           'Label "{0}" found but not in label allow list'.format(label))
 
-
   def test_deny_list(self):
     """Test the label_deny_list option."""
     option = ic.ImageClassifierOptions(label_deny_list=_DENY_LIST)
@@ -83,7 +81,6 @@ class ImageClassifierTest(unittest.TestCase):
       label = category.label
       self.assertNotIn(label, _DENY_LIST,
                        'Label "{0}" found but in deny list.'.format(label))
-
 
   def test_score_threshold_option(self):
     """Test the score_threshold option."""
@@ -98,7 +95,6 @@ class ImageClassifierTest(unittest.TestCase):
           'Classification with score lower than threshold found. {0}'.format(
               category))
 
-
   def test_max_results_option(self):
     """Test the max_results option."""
     option = ic.ImageClassifierOptions(max_results=_MAX_RESULTS)
@@ -107,7 +103,6 @@ class ImageClassifierTest(unittest.TestCase):
 
     self.assertLessEqual(
         len(categories), _MAX_RESULTS, 'Too many results returned.')
-
 
   def _load_ground_truth(self):
     """Load ground truth classification result from a CSV file."""
@@ -120,7 +115,6 @@ class ImageClassifierTest(unittest.TestCase):
           score=float(row['score']))
 
         self._ground_truth_classifications.append(category)
-
 
   def _create_ground_truth_csv(self, output_file=_GROUND_TRUTH_FILE):
     """A util function to recreate the ground truth result."""
