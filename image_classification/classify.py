@@ -15,6 +15,7 @@
 
 import argparse
 import time
+import sys
 
 import cv2
 from image_classifier import ImageClassifier
