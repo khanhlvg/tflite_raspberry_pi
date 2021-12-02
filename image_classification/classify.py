@@ -120,8 +120,9 @@ def main():
       required=False,
       default=4)
   parser.add_argument(
-      '--enableEdgeTpu',
+      '--enableEdgeTPU',
       help='Whether to run the model on EdgeTPU.',
+      action="store_true",
       required=False,
       default=False)
   parser.add_argument(
@@ -138,7 +139,7 @@ def main():
       default=480)
   args = parser.parse_args()
 
-  run(args.model, int(args.maxResults), int(args.numThreads), bool(args.enableEdgeTpu),
+  run(args.model, int(args.maxResults), int(args.numThreads), bool(args.enableEdgeTPU),
       int(args.cameraId), args.frameWidth, args.frameHeight)
 
 if __name__ == '__main__':
