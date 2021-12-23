@@ -4,7 +4,7 @@ This example uses [TensorFlow Lite](https://tensorflow.org/lite) with Python
 on a Raspberry Pi to perform real-time image segmentation using images
 streamed from the camera.
 
-At the end of this page, there are extra steps to accelerate the example using the Coral USB Accelerator, which increases the inference speed by ~10x.
+At the end of this page, there are extra steps to accelerate the example using the Coral USB Accelerator to increase inference speed.
 
 
 ## Set up your hardware

@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import json
 import platform
 from enum import Enum
 from typing import NamedTuple, List, Tuple
-import zipfile
 
 import cv2
 import numpy as np
+from tflite_support import metadata
 
 try:
   # Import TFLite interpreter from tflite_runtime package if it's available.
@@ -169,11 +169,6 @@ def _label_to_color_image(label: np.ndarray) -> np.ndarray:
 class ImageSegmenter(object):
   """A wrapper class for a TFLite image segmentation model."""
 
-  _mean = 127.5
-  """Default mean normalization parameter for float model."""
-  _std = 127.5
-  """Default std normalization parameter for float model."""
-
   def __init__(self,
                model_path: str,
                options: ImageSegmenterOptions = ImageSegmenterOptions()) -> None:
@@ -187,21 +182,26 @@ class ImageSegmenter(object):
             ValueError: If the TFLite model is invalid.
             OSError: If the current OS isn't supported by EdgeTPU.
         """
-    # Load label list from metadata.
-    try:
-      with zipfile.ZipFile(model_path) as model_with_metadata:
-        if not model_with_metadata.namelist():
-          raise ValueError('Invalid TFLite model: no label file found.')
+    # Load metadata from model.
+    displayer = metadata.MetadataDisplayer.with_model_file(model_path)
 
-        file_name = model_with_metadata.namelist()[0]
-        with model_with_metadata.open(file_name) as label_file:
-          label_list = label_file.read().splitlines()
-          self._label_list = [label.decode('ascii') for label in label_list]
-    except zipfile.BadZipFile:
-      print(
-        'ERROR: Please use models trained with Model Maker or downloaded from TensorFlow Hub.'
-      )
-      raise ValueError('Invalid TFLite model: no metadata found.')
+    # Save model metadata for preprocessing later.
+    model_metadata = json.loads(displayer.get_metadata_json())
+    process_units = model_metadata['subgraph_metadata'][0]['input_tensor_metadata'][0]['process_units']
+    mean = 127.5
+    std = 127.5
+    for option in process_units:
+      if option['options_type'] == 'NormalizationOptions':
+        mean = option['options']['mean'][0]
+        std = option['options']['std'][0]
+    self._mean = mean
+    self._std = std
+
+    # Load label list from metadata.
+    file_name = displayer.get_packed_associated_file_list()[0]
+    label_map_file = displayer.get_associated_file_buffer(file_name).decode()
+    label_list = list(filter(lambda x: len(x) > 0, label_map_file.splitlines()))
+    self._label_list = label_list
 
     # Initialize TFLite model.
     if options.enable_edgetpu:
