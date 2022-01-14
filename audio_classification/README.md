@@ -1,8 +1,8 @@
-# TensorFlow Lite Python image classification example with Raspberry Pi.
+# TensorFlow Lite Python audio classification example with Raspberry Pi.
 
 This example uses [TensorFlow Lite](https://tensorflow.org/lite) with Python
-on a Raspberry Pi to perform real-time image classification using images
-streamed from the camera.
+on a Raspberry Pi to perform real-time audio classification using audio
+streamed from the microphone.
 
 At the end of this page, there are extra steps to accelerate the example using
 the Coral USB Accelerator to increase inference speed.
@@ -44,7 +44,7 @@ Then use our script to install a couple Python packages, and
 download the TFLite model:
 
 ```
-cd sound_classification
+cd audio_classification
 
 # Run this script to install the required dependencies and download the TFLite models.
 sh setup.sh
@@ -83,7 +83,7 @@ If you have a Coral USB Accelerator, you can run the sample with it enabled:
 1.  First, be sure you have completed the [USB Accelerator setup instructions](
     https://coral.withgoogle.com/docs/accelerator/get-started/).
 
-2.  Run the image classification script using the Edge TPU TFLite model and
+2.  Run the audio classification script using the Edge TPU TFLite model and
     enable the Edge TPU option.
 
 ```

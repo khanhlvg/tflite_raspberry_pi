@@ -10,4 +10,4 @@ This repository contains examples of different ML use cases on Raspberry Pi.
 
 ## Audio
 
-* [Sound Classification](sound_classification/)
+* [Audio Classification](audio_classification/)
