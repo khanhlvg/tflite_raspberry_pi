@@ -14,12 +14,10 @@
 """Unit tests for the AudioClassifier wrapper."""
 
 import csv
-
-import resampy
-from scipy.io import wavfile
 import unittest
 
 import numpy as np
+from scipy.io import wavfile
 
 from audio_classifier import AudioClassifier
 from audio_classifier import AudioClassifierOptions
@@ -48,8 +46,9 @@ class AudioClassifierTest(unittest.TestCase):
     # Load the input audio file. Use only the beginning of the file that fits the model input size.
     original_sample_rate, wav_data = wavfile.read(_AUDIO_FILE, True)
 
-    # Resample to the sampling rate required by the model.
-    resampy.resample(wav_data, original_sample_rate, input_sample_rate)
+    # Ensure that the WAV file's sampling rate matches with the model requirement.
+    self.assertEqual(original_sample_rate, input_sample_rate,
+                     'The test audio\'s sample rate does not match with the model\'s requirement.')
 
     # Normalize to float32 [-1, 1]
     wav_data = (wav_data / np.iinfo(wav_data.dtype).max).astype(np.float32)
