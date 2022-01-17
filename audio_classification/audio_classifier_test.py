@@ -16,16 +16,15 @@
 import csv
 import unittest
 
-import numpy as np
-from scipy.io import wavfile
-
 from audio_classifier import AudioClassifier
 from audio_classifier import AudioClassifierOptions
 from audio_classifier import Category
+import numpy as np
+from scipy.io import wavfile
 
 _MODEL_FILE = 'yamnet.tflite'
 _GROUND_TRUTH_FILE = 'test_data/ground_truth.csv'
-_AUDIO_FILE = 'test_data/miaow_16k.wav'
+_AUDIO_FILE = 'test_data/meow_16k.wav'
 _ACCEPTABLE_ERROR_RANGE = 0.01
 
 
@@ -43,14 +42,18 @@ class AudioClassifierTest(unittest.TestCase):
     input_sample_rate = tensor.format.sample_rate
     channels = tensor.format.channels
 
-    # Load the input audio file. Use only the beginning of the file that fits the model input size.
+    # Load the input audio file. Use only the beginning of the file that fits
+    # the model input size.
     original_sample_rate, wav_data = wavfile.read(_AUDIO_FILE, True)
 
-    # Ensure that the WAV file's sampling rate matches with the model requirement.
-    self.assertEqual(original_sample_rate, input_sample_rate,
-                     'The test audio\'s sample rate does not match with the model\'s requirement.')
+    # Ensure that the WAV file's sampling rate matches with the model
+    # requirement.
+    self.assertEqual(
+        original_sample_rate, input_sample_rate,
+        'The test audio\'s sample rate does not match with the model\'s requirement.'
+    )
 
-    # Normalize to float32 [-1, 1]
+    # Normalize to [-1, 1] and cast to float32
     wav_data = (wav_data / np.iinfo(wav_data.dtype).max).astype(np.float32)
 
     # Use only the beginning of the file that fits the model input size.
@@ -89,8 +92,8 @@ class AudioClassifierTest(unittest.TestCase):
     for category in categories:
       label = category.label
       self.assertIn(
-        label, allow_list,
-        'Label "{0}" found but not in label allow list'.format(label))
+          label, allow_list,
+          'Label "{0}" found but not in label allow list'.format(label))
 
   def test_deny_list(self):
     """Test the label_deny_list option."""
@@ -114,8 +117,9 @@ class AudioClassifierTest(unittest.TestCase):
     for category in categories:
       score = category.score
       self.assertGreaterEqual(
-        score, score_threshold,
-        'Classification with score lower than threshold found. {0}'.format(category))
+          score, score_threshold,
+          'Classification with score lower than threshold found. {0}'.format(
+              category))
 
   def test_max_results_option(self):
     """Test the max_results option."""
@@ -125,7 +129,7 @@ class AudioClassifierTest(unittest.TestCase):
     categories = classifier.classify(self._input_tensor)
 
     self.assertLessEqual(
-      len(categories), max_results, 'Too many results returned.')
+        len(categories), max_results, 'Too many results returned.')
 
   def _load_ground_truth(self):
     """Load ground truth classification result from a CSV file."""
@@ -137,13 +141,17 @@ class AudioClassifierTest(unittest.TestCase):
 
         self._ground_truth_classifications.append(category)
 
+# pylint: disable=g-unreachable-test-method
+
   def _create_ground_truth_csv(self, output_file=_GROUND_TRUTH_FILE):
     """A util function to regenerate the ground truth result.
-        This function is not used in the test but it exists to make adding more
-        audio and ground truth data to the test easier in the future.
-        Args:
-        output_file: Filename to write the ground truth CSV.
-        """
+
+    This function is not used in the test but it exists to make adding more
+    audio and ground truth data to the test easier in the future.
+
+    Args:
+      output_file: Filename to write the ground truth CSV.
+    """
     classifier = AudioClassifier(_MODEL_FILE)
     categories = classifier.classify(self._input_tensor)
     with open(output_file, 'w') as f:
@@ -152,10 +160,11 @@ class AudioClassifierTest(unittest.TestCase):
       writer.writeheader()
       for category in categories:
         writer.writerow({
-          'label': category.label,
-          'score': category.score,
+            'label': category.label,
+            'score': category.score,
         })
 
+# pylint: enable=g-unreachable-test-method
 
 if __name__ == '__main__':
   unittest.main()

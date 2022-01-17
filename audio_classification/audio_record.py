@@ -18,36 +18,42 @@ import sounddevice as sd
 
 
 class AudioRecord(object):
+  """A class to record audio in a streaming basis."""
 
   def __init__(self, channels, sampling_rate: int) -> None:
     self._lock = threading.Lock()
     self._audio_buffer = []
 
-    def audio_callback(indata, frames, time, status):
+    def audio_callback(indata, *_):
+      """A callback to receive recorded audio data from sounddevice."""
       self._lock.acquire()
       self._audio_buffer.append(np.copy(indata))
       self._lock.release()
 
     # Create an input stream to continuously capture the audio data.
     self._stream = sd.InputStream(
-      channels=channels,
-      samplerate=sampling_rate,
-      callback=audio_callback,
+        channels=channels,
+        samplerate=sampling_rate,
+        callback=audio_callback,
     )
 
   def start_recording(self) -> None:
-    """Start the input stream"""
+    """Start the audio recording."""
     self._stream.start()
 
   def stop(self) -> None:
-    """Stop the input stream"""
+    """Stop the audio recording."""
     self._audio_buffer = []
     self._stream.stop()
 
   @property
   def buffer(self) -> np.ndarray:
+    """The audio data captured in the buffer.
+
+    The buffer is cleared immediately after being read.
+    """
     self._lock.acquire()
-    if len(self._audio_buffer):
+    if self._audio_buffer:
       result = np.concatenate(self._audio_buffer)
       self._audio_buffer.clear()
     else:
