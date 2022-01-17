@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""A module get audio from device."""
+"""A module to record audio in a streaming basis."""
 import threading
 import numpy as np
 import sounddevice as sd
@@ -19,18 +19,18 @@ import sounddevice as sd
 
 class AudioRecord(object):
 
-  def __init__(self, sampling_rate: int) -> None:
+  def __init__(self, channels, sampling_rate: int) -> None:
     self._lock = threading.Lock()
     self._audio_buffer = []
 
     def audio_callback(indata, frames, time, status):
       self._lock.acquire()
-      self._audio_buffer.append(indata[::1, [0]])
+      self._audio_buffer.append(np.copy(indata))
       self._lock.release()
 
     # Create an input stream to continuously capture the audio data.
     self._stream = sd.InputStream(
-      channels=1,
+      channels=channels,
       samplerate=sampling_rate,
       callback=audio_callback,
     )

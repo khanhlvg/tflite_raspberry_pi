@@ -19,7 +19,7 @@ from typing import NamedTuple, List
 import numpy as np
 from tflite_support import metadata
 
-from audio_controller import AudioRecord
+from audio_record import AudioRecord
 
 try:
   # Import TFLite interpreter from tflite_runtime package if it's available.
@@ -177,7 +177,7 @@ class AudioClassifier(object):
     Returns:
         An AudioRecord instance.
     """
-    return AudioRecord(self._audio_format.sample_rate)
+    return AudioRecord(self._audio_format.channels, self._audio_format.sample_rate)
 
   def classify(self, tensor: TensorAudio) -> List[Category]:
     """Run classification on the input data.
