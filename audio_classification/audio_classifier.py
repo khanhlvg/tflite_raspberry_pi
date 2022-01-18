@@ -163,8 +163,14 @@ class AudioClassifier(object):
           model_path=model_path, num_threads=options.num_threads)
     interpreter.allocate_tensors()
 
+    # Calculate the model input length this way to support both model inputs
+    # with and without batch dimension.
+    total_input_size = np.prod(interpreter.get_input_details()[0]['shape'])
+    self._input_sample_count = int(total_input_size /
+                                   self._audio_format.channels)
+    self._input_shape = interpreter.get_input_details()[0]['shape']
+
     self._waveform_input_index = interpreter.get_input_details()[0]['index']
-    self._input_sample_count = interpreter.get_input_details()[0]['shape'][0]
     self._scores_output_index = interpreter.get_output_details()[0]['index']
 
     self._interpreter = interpreter
@@ -197,9 +203,7 @@ class AudioClassifier(object):
     Returns:
         A list of classification results.
     """
-    input_tensor = np.squeeze(tensor.buffer)
-    self._interpreter.resize_tensor_input(
-        self._waveform_input_index, [len(input_tensor)], strict=True)
+    input_tensor = tensor.buffer.reshape(self._input_shape)
     self._interpreter.allocate_tensors()
     self._interpreter.set_tensor(self._waveform_input_index,
                                  input_tensor.astype(np.float32))
