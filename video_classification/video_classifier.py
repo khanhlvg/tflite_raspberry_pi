@@ -13,8 +13,7 @@
 # limitations under the License.
 """A wrapper for TensorFlow Lite video classification models."""
 
-import dataclasses
-from typing import List
+from typing import List, NamedTuple
 
 import cv2
 import numpy as np
@@ -28,8 +27,7 @@ except ImportError:
     Interpreter = tf.lite.Interpreter
 
 
-@dataclasses.dataclass 
-class VideoClassifierOptions(object):
+class VideoClassifierOptions(NamedTuple):
     """A config to initialize an video classifier."""
     
     label_allow_list: List[str] = None
@@ -48,8 +46,7 @@ class VideoClassifierOptions(object):
     """The score threshold of classification results to return."""
 
 
-@dataclasses.dataclass
-class Category(object):
+class Category(NamedTuple):
     """A result of a video classification."""
     label: str
     score: float

@@ -14,11 +14,11 @@
 """Main script to run video classification."""
 
 import argparse
-import time
 import sys
+import time
 
 import cv2
-import numpy as np
+
 from video_classifier import VideoClassifier
 from video_classifier import VideoClassifierOptions
 
