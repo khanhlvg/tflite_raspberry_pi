@@ -1,4 +1,4 @@
-# Copyright 2021 The TensorFlow Authors. All Rights Reserved.
+# Copyright 2022 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
 """A module to run audio classification with a TensorFlow Lite model."""
 import json
 import platform
+import threading
 from typing import List, NamedTuple
-
-from audio_record import AudioRecord
 import numpy as np
 from tflite_support import metadata
+import sounddevice as sd
 
 # pylint: disable=g-import-not-at-top
 try:
@@ -73,39 +73,44 @@ class TensorAudio(object):
 
   def __init__(self, audio_format: AudioFormat, sample_count: int):
     self._format = audio_format
-    self._buffer = np.zeros([sample_count, audio_format.channels])
+    self._sample_count = sample_count
+    self._buffer = np.zeros([self._sample_count, self._format.channels], dtype=np.float)
 
   @property
   def format(self) -> AudioFormat:
     return self._format
 
-  def load_from_audio_record(self, audio_record: AudioRecord) -> None:
-    """Load audio data from an AudioRecord instance."""
-
-    # Load audio data from the AudioRecord instance.
-    data = audio_record.buffer
-    if not data.shape[0]:
-      # Skip if the audio record's buffer is empty.
-      return
-    elif len(data) > len(self._buffer):
-      # Only get last bits of data that fits in this TensorAudio buffer size.
-      data = data[-len(self._buffer), :]
-
-    self.load_from_array(data)
+  def clear(self):
+    """Clear the internal buffer and fill it with zeros."""
+    self._buffer.fill(0)
 
   def load_from_array(self, src: np.ndarray):
-    """Load audio data from a NumPy array."""
-    if len(src) > len(self._buffer):
-      raise ValueError('Input audio is too large.')
+    """Load audio data from a NumPy array.
 
-    # Shift the internal buffer backward and add the incoming data to the end of
-    # the buffer.
-    shift = len(src)
-    self._buffer = np.roll(self._buffer, -shift, axis=0)
-    self._buffer[-shift:, :] = src
+    Args:
+      src: A NumPy array contains the input audio.
+
+    Raises:
+      ValueError: Raised if the input array has an incorrect shape.
+    """
+    if len(src) > len(self._buffer):
+      raise ValueError('Input audio has too many samples.')
+    elif src.shape[1] != self._format.channels:
+      raise ValueError(f'Input audio contains an invalid number of channels. '
+                       f'Expects {self._format.channels} channels.')
+
+    if len(src) == len(self._buffer):
+      # Copy values from the source array to the internal buffer.
+      np.copyto(self._buffer, src)
+    else:
+      # Shift the internal buffer backward and add the incoming data to the end of
+      # the buffer.
+      shift = len(src)
+      self._buffer = np.roll(self._buffer, -shift, axis=0)
+      self._buffer[-shift:, :] = src
 
   @property
-  def buffer(self):
+  def buffer(self) -> np.ndarray:
     return self._buffer
 
 
@@ -176,23 +181,31 @@ class AudioClassifier(object):
     self._interpreter = interpreter
     self._options = options
 
-  def create_input_tensor_audio(self) -> TensorAudio:
-    """Creates a TensorAudio instance to store the audio input.
+  def create_audio_recorder_input(self) -> (TensorAudio, sd.InputStream):
+    input_sample_count = self._input_sample_count
+    tensor_audio = TensorAudio(
+        audio_format=self._audio_format, sample_count=input_sample_count)
+    lock = threading.Lock()
 
-    Returns:
-        A TensorAudio instance.
-    """
-    return TensorAudio(
-        audio_format=self._audio_format, sample_count=self._input_sample_count)
+    def audio_callback(audio_data, *_):
+      """A callback to receive recorded audio data from sounddevice."""
+      lock.acquire()
+      if len(audio_data) > input_sample_count:
+        # Only take the latest input if the audio data received is
+        # longer than what the TensorAudio can store.
+        tensor_audio.load_from_array(audio_data[-input_sample_count:])
+      else:
+        tensor_audio.load_from_array(audio_data)
+      lock.release()
 
-  def create_audio_record(self) -> AudioRecord:
-    """Creates an AudioRecord instance to record audio.
+    # Create an input stream to continuously capture the audio data.
+    input_stream = sd.InputStream(
+        channels=self._audio_format.channels,
+        samplerate=self._audio_format.sample_rate,
+        callback=audio_callback,
+    )
 
-    Returns:
-        An AudioRecord instance.
-    """
-    return AudioRecord(self._audio_format.channels,
-                       self._audio_format.sample_rate)
+    return tensor_audio, input_stream
 
   def classify(self, tensor: TensorAudio) -> List[Category]:
     """Run classification on the input data.

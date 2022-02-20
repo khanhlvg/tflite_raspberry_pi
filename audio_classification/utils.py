@@ -13,19 +13,18 @@
 # limitations under the License.
 """A module with util functions."""
 import sys
-from typing import List, Callable
-
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
+from typing import List
 
 from audio_classifier import Category
+from matplotlib import rcParams
+import matplotlib.pyplot as plt
 
 rcParams.update({
-  # Set the plot left margin so that the labels are visible.
-  'figure.subplot.left': 0.3,
+    # Set the plot left margin so that the labels are visible.
+    'figure.subplot.left': 0.3,
 
-  # Hide the bottom toolbar.
-  'toolbar': 'None'
+    # Hide the bottom toolbar.
+    'toolbar': 'None'
 })
 
 
@@ -35,7 +34,7 @@ class Plotter(object):
   _PAUSE_TIME = 0.05
   """Time for matplotlib to wait for UI event."""
 
-  def __init__(self, keypress_callback: Callable = None) -> None:
+  def __init__(self) -> None:
     fig, self._axes = plt.subplots()
     fig.canvas.manager.set_window_title('Audio classification')
 
@@ -43,6 +42,7 @@ class Plotter(object):
     def event_callback(event):
       if event.key == 'escape':
         sys.exit(0)
+
     fig.canvas.mpl_connect('key_press_event', event_callback)
 
     plt.show(block=False)
@@ -51,11 +51,12 @@ class Plotter(object):
     """Plot the audio classification result.
 
     Args:
-        categories: A list of Category instances from an audio classification model.
+        categories: A list of Category instances from an audio classification
+          model.
     """
     # Clear the axes
     self._axes.cla()
-    self._axes.set_title("Press ESC to exit.")
+    self._axes.set_title('Press ESC to exit.')
     self._axes.set_xlim((0, 1))
 
     # Plot the results so that the most probable category comes at the top.
