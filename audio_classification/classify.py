@@ -27,19 +27,19 @@ def run(model: str, max_results: int, score_threshold: float,
   """Continuously run inference on audio data acquired from the device.
 
   Args:
-      model: Name of the TFLite audio classification model.
-      max_results: Maximum number of classification results to display.
-      score_threshold: The score threshold of classification results.
-      overlapping_factor: Target overlapping between adjacent inferences.
-      num_threads: Number of CPU threads to run the model.
-      enable_edgetpu: Whether to run the model on EdgeTPU.
+    model: Name of the TFLite audio classification model.
+    max_results: Maximum number of classification results to display.
+    score_threshold: The score threshold of classification results.
+    overlapping_factor: Target overlapping between adjacent inferences.
+    num_threads: Number of CPU threads to run the model.
+    enable_edgetpu: Whether to run the model on EdgeTPU.
   """
 
   if (overlapping_factor <= 0) or (overlapping_factor >= 1.0):
     raise ValueError('Overlapping factor must be between 0 and 1.')
 
   if (score_threshold < 0) or (score_threshold > 1.0):
-    raise ValueError('Score threshold must be between 0 and 1.')
+    raise ValueError('Score threshold must be between (inclusive) 0 and 1.')
 
   # Initialize the audio classification model.
   options = AudioClassifierOptions(
@@ -50,7 +50,8 @@ def run(model: str, max_results: int, score_threshold: float,
   classifier = AudioClassifier(model, options)
 
   # Initialize the audio recorder and a tensor to store the audio input.
-  tensor_audio, input_stream = classifier.create_audio_recorder_input()
+  audio_record = classifier.create_audio_record()
+  tensor_audio = classifier.create_input_tensor_audio()
 
   # We'll try to run inference every interval_between_inference seconds.
   # This is usually half of the model's input length to create an overlapping
@@ -65,7 +66,7 @@ def run(model: str, max_results: int, score_threshold: float,
   plotter = Plotter()
 
   # Start audio recording in the background.
-  input_stream.start()
+  audio_record.start_recording()
 
   # Loop until the user close the classification results plot.
   while True:
@@ -79,12 +80,12 @@ def run(model: str, max_results: int, score_threshold: float,
     last_inference_time = now
 
     # Load the input audio and run classify.
+    tensor_audio.load_from_audio_record(audio_record)
     categories = classifier.classify(tensor_audio)
 
     # Plot the classification results.
     plotter.plot(categories)
 
-  input_stream.stop()
 
 def main():
   parser = argparse.ArgumentParser(
