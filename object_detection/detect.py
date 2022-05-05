@@ -20,9 +20,8 @@ import time
 import cv2
 import utils
 
-from tflite_support.task import core
-from tflite_support.task import processor
-from tflite_support.task import vision
+from object_detector import ObjectDetector
+from object_detector import ObjectDetectorOptions
 
 
 def run(model: str, camera_id: int, width: int, height: int,
@@ -57,11 +56,11 @@ def run(model: str, camera_id: int, width: int, height: int,
   fps_avg_frame_count = 10
 
   # Initialize the object detection model
-  base_options = core.BaseOptions(file_name=model, use_coral=enable_edgetpu, num_threads=num_threads)
-  detection_options = processor.DetectionOptions(max_results=3,
-                                                 score_threshold=0.3)
-  options = vision.ObjectDetectorOptions(base_options=base_options, detection_options=detection_options)
-  detector = vision.ObjectDetector.create_from_options(options)
+  options = ObjectDetectorOptions(num_threads=num_threads,
+                                  score_threshold=0.3,
+                                  max_results=3,
+                                  enable_edgetpu=enable_edgetpu)
+  detector = ObjectDetector(model_path=model, options=options)
 
   # Continuously capture images from the camera and run inference
   while cap.isOpened():
@@ -76,19 +75,18 @@ def run(model: str, camera_id: int, width: int, height: int,
 
     counter += 1
     image = cv2.flip(image, 1)
-    input_tensor = vision.TensorImage.create_from_array(image)
     elapsed_time = int((time.time() - start_time) * 1000)
     print('OpenCV read image time: {0}ms'.format(elapsed_time))
 
     # Run object detection estimation using the model.
     start_time = time.time()
-    detection_result = detector.detect(input_tensor)
+    detections = detector.detect(image)
     elapsed_time = int((time.time() - start_time) * 1000)
     print('Inference time: {0}ms'.format(elapsed_time))
 
     start_time = time.time()
     # Draw keypoints and edges on input image
-    image = utils.visualize(image, detection_result)
+    image = utils.visualize(image, detections)
 
     # Calculate the FPS
     if counter % fps_avg_frame_count == 0:
