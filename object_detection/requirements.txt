@@ -2,4 +2,4 @@ argparse
 numpy~=1.21.0
 opencv-python~=4.5.3.56
 tflite-runtime>=2.7.0
-tflite-support>=0.4.0rc1
+tflite-support>=0.4.0rc0
