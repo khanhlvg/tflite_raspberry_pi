@@ -15,12 +15,13 @@
 
 import csv
 import unittest
+from typing import List
 
-from audio_classifier import AudioClassifier
-from audio_classifier import AudioClassifierOptions
+from tflite_support.task import audio
+from tflite_support.task import core
+from tflite_support.task import processor
 from audio_classifier import Category
 import numpy as np
-from scipy.io import wavfile
 
 _MODEL_FILE = 'yamnet.tflite'
 _GROUND_TRUTH_FILE = 'test_data/ground_truth.csv'
@@ -34,37 +35,43 @@ class AudioClassifierTest(unittest.TestCase):
     """Initialize the shared variables."""
     super().setUp()
     self._load_ground_truth()
+    
 
     # Load the TFLite model to get the audio format required by the model.
-    classifier = AudioClassifier(_MODEL_FILE)
-    tensor = classifier.create_input_tensor_audio()
-    input_size = len(tensor.buffer)
-    input_sample_rate = tensor.format.sample_rate
-    channels = tensor.format.channels
+    self._initialize_model()
 
     # Load the input audio file. Use only the beginning of the file that fits
     # the model input size.
-    original_sample_rate, wav_data = wavfile.read(_AUDIO_FILE, True)
+    audio_tensor = audio.TensorAudio.create_from_wav_file(_AUDIO_FILE, self._classifier.required_input_buffer_size)
 
-    # Ensure that the WAV file's sampling rate matches with the model
-    # requirement.
-    self.assertEqual(
-        original_sample_rate, input_sample_rate,
-        'The test audio\'s sample rate does not match with the model\'s requirement.'
-    )
+    self._input_tensor = audio_tensor
+        
+  def _initialize_model(self,
+                        max_results: int = 5,
+                        score_threshold: float = 0.0,
+                        label_allow_list: List[str] = None,
+                        label_deny_list: List[str] = None) -> None:
+    base_options = core.BaseOptions(file_name=_MODEL_FILE)
+    classification_options = processor.ClassificationOptions(max_results=max_results,
+                                                             score_threshold=score_threshold,
+                                                             class_name_allowlist=label_allow_list,
+                                                             class_name_denylist=label_deny_list)
+    options = audio.AudioClassifierOptions(base_options=base_options, classification_options=classification_options)
 
-    # Normalize to [-1, 1] and cast to float32
-    wav_data = (wav_data / np.iinfo(wav_data.dtype).max).astype(np.float32)
-
-    # Use only the beginning of the file that fits the model input size.
-    wav_data = np.reshape(wav_data[:input_size], [input_size, channels])
-    tensor.load_from_array(wav_data)
-    self._input_tensor = tensor
-
+    # AudioClassifier
+    self._classifier = audio.AudioClassifier.create_from_options(options)
+    
+  def _parse(self, classification_results) -> List[Category]:
+    """Parse the output classification_results into  a list of Category instances."""
+    categories = [Category(label=category.class_name,score=category.score)
+                  for category in classification_results.classifications[0].classes]
+    
+    return categories
+  
   def test_default_option(self):
     """Check if the default option works correctly."""
-    classifier = AudioClassifier(_MODEL_FILE)
-    categories = classifier.classify(self._input_tensor)
+    classification_results = self._classifier.classify(self._input_tensor)
+    categories = self._parse(classification_results)
 
     # Check if all ground truth classification is found.
     for gt_classification in self._ground_truth_classifications:
@@ -85,9 +92,9 @@ class AudioClassifierTest(unittest.TestCase):
   def test_allow_list(self):
     """Test the label_allow_list option."""
     allow_list = ['Cat']
-    option = AudioClassifierOptions(label_allow_list=allow_list)
-    classifier = AudioClassifier(_MODEL_FILE, options=option)
-    categories = classifier.classify(self._input_tensor)
+    self._initialize_model(label_allow_list=allow_list)
+    classification_results = self._classifier.classify(self._input_tensor)
+    categories = self._parse(classification_results)
 
     for category in categories:
       label = category.label
@@ -98,9 +105,9 @@ class AudioClassifierTest(unittest.TestCase):
   def test_deny_list(self):
     """Test the label_deny_list option."""
     deny_list = ['Animal']
-    option = AudioClassifierOptions(label_deny_list=deny_list)
-    classifier = AudioClassifier(_MODEL_FILE, options=option)
-    categories = classifier.classify(self._input_tensor)
+    self._initialize_model(label_deny_list=deny_list)
+    classification_results = self._classifier.classify(self._input_tensor)
+    categories = self._parse(classification_results)
 
     for category in categories:
       label = category.label
@@ -110,9 +117,9 @@ class AudioClassifierTest(unittest.TestCase):
   def test_score_threshold_option(self):
     """Test the score_threshold option."""
     score_threshold = 0.5
-    option = AudioClassifierOptions(score_threshold=score_threshold)
-    classifier = AudioClassifier(_MODEL_FILE, options=option)
-    categories = classifier.classify(self._input_tensor)
+    self._initialize_model(score_threshold=score_threshold)
+    classification_results = self._classifier.classify(self._input_tensor)
+    categories = self._parse(classification_results)
 
     for category in categories:
       score = category.score
@@ -124,9 +131,9 @@ class AudioClassifierTest(unittest.TestCase):
   def test_max_results_option(self):
     """Test the max_results option."""
     max_results = 3
-    option = AudioClassifierOptions(max_results=max_results)
-    classifier = AudioClassifier(_MODEL_FILE, options=option)
-    categories = classifier.classify(self._input_tensor)
+    self._initialize_model(max_results=max_results)
+    classification_results = self._classifier.classify(self._input_tensor)
+    categories = self._parse(classification_results)
 
     self.assertLessEqual(
         len(categories), max_results, 'Too many results returned.')
@@ -152,8 +159,8 @@ class AudioClassifierTest(unittest.TestCase):
     Args:
       output_file: Filename to write the ground truth CSV.
     """
-    classifier = AudioClassifier(_MODEL_FILE)
-    categories = classifier.classify(self._input_tensor)
+    classification_results = self._classifier.classify(self._input_tensor)
+    categories = self._parse(classification_results)
     with open(output_file, 'w') as f:
       header = ['label', 'score']
       writer = csv.DictWriter(f, fieldnames=header)
