@@ -15,17 +15,13 @@
 
 import argparse
 import time
-from typing import List, NamedTuple
 
 from tflite_support.task import audio
 from tflite_support.task import core
 from tflite_support.task import processor
-from utils import Plotter
 
-class Category(NamedTuple):
-  """A result of a audio classification."""
-  label: str
-  score: float
+from utils import Category
+from utils import Plotter
 
 
 def run(model: str, max_results: int, score_threshold: float,
