@@ -49,7 +49,7 @@ def visualize(
     display_name = category.display_name
     probability = round(category.score, 2)
     result_text = display_name + ' (' + str(probability) + ')'
-    text_location = (_MARGIN + detection.bounding_box.left, _MARGIN + _ROW_SIZE + detection.bounding_box.top)
+    text_location = (_MARGIN + bbox.origin_x, _MARGIN + _ROW_SIZE + bbox.origin_y)
     cv2.putText(image, result_text, text_location, cv2.FONT_HERSHEY_PLAIN,
                 _FONT_SIZE, _TEXT_COLOR, _FONT_THICKNESS)
 
