@@ -102,8 +102,8 @@ def run(model: str, camera_id: int, width: int, height: int,
 
     # Run object detection estimation using the model.
     rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    img = vision.TensorImage.create_from_array(rgb_image)
-    detection_results = detector.detect(img)
+    tensor_image = vision.TensorImage.create_from_array(rgb_image)
+    detection_results = detector.detect(tensor_image)
     
     detections = []
     # Parse the model output into a list of Detection entities.
