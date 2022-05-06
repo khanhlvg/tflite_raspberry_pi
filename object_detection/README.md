@@ -42,10 +42,8 @@ cd examples/lite/examples/object_detection/raspberry_pi
 sh setup.sh
 ```
 
-In this project, all you need from the TensorFlow Lite API is the `Interpreter`
-class. So instead of installing the large `tensorflow` package, we're using the
-much smaller `tflite_runtime` package. The setup scripts automatically install
-the TensorFlow Lite runtime.
+In this project, all you need from the TFLite Task Library is the `tflite_support` package. The setup scripts automatically install
+the `tflite_support` package.
 
 ## Run the example
 
