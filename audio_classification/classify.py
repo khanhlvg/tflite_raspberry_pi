@@ -16,8 +16,11 @@
 import argparse
 import time
 
-from audio_classifier import AudioClassifier
-from audio_classifier import AudioClassifierOptions
+from tflite_support.task import audio
+from tflite_support.task import core
+from tflite_support.task import processor
+
+from utils import Category
 from utils import Plotter
 
 
@@ -42,12 +45,16 @@ def run(model: str, max_results: int, score_threshold: float,
     raise ValueError('Score threshold must be between (inclusive) 0 and 1.')
 
   # Initialize the audio classification model.
-  options = AudioClassifierOptions(
-      num_threads=num_threads,
-      max_results=max_results,
-      score_threshold=score_threshold,
-      enable_edgetpu=enable_edgetpu)
-  classifier = AudioClassifier(model, options)
+  if enable_edgetpu:
+    base_options = core.BaseOptions(file_name=model, use_coral=True)
+  else:
+    base_options = core.BaseOptions(file_name=model)
+  classification_options = processor.ClassificationOptions(max_results=max_results,
+                                                           score_threshold=score_threshold)
+  options = audio.AudioClassifierOptions(base_options=base_options, classification_options=classification_options)
+
+  # AudioClassifier
+  classifier = audio.AudioClassifier.create_from_options(options)
 
   # Initialize the audio recorder and a tensor to store the audio input.
   audio_record = classifier.create_audio_record()
@@ -81,7 +88,10 @@ def run(model: str, max_results: int, score_threshold: float,
 
     # Load the input audio and run classify.
     tensor_audio.load_from_audio_record(audio_record)
-    categories = classifier.classify(tensor_audio)
+    classification_results = classifier.classify(tensor_audio)
+    # Parse the output classification_results into  a list of Category instances
+    categories = [Category(label=category.class_name,score=category.score)
+                  for category in classification_results.classifications[0].classes]
 
     # Plot the classification results.
     plotter.plot(categories)

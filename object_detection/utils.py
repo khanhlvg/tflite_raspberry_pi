@@ -16,7 +16,7 @@
 from typing import List
 
 import cv2
-from object_detector import Detection
+from detect import Detection
 import numpy as np
 
 _MARGIN = 10  # pixels

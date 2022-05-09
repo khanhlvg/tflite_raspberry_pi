@@ -13,9 +13,8 @@
 # limitations under the License.
 """A module with util functions."""
 import sys
-from typing import List
+from typing import List, NamedTuple
 
-from audio_classifier import Category
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
@@ -26,6 +25,12 @@ rcParams.update({
     # Hide the bottom toolbar.
     'toolbar': 'None'
 })
+
+
+class Category(NamedTuple):
+  """A result of a audio classification."""
+  label: str
+  score: float
 
 
 class Plotter(object):

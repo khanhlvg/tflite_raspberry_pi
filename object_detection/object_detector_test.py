@@ -15,11 +15,16 @@
 
 import csv
 import unittest
+from typing import List
 
 import cv2
-import object_detector as od
 
-_MODEL_FILE = 'test_data/coco_efficientdet_lite0_v1_1.0_quant_2021_09_06.tflite'
+from tflite_support.task import vision
+from tflite_support.task import core
+from tflite_support.task import processor
+from detect import Rect, Category, Detection
+
+_MODEL_FILE = 'efficientdet_lite0.tflite'
 _GROUND_TRUTH_FILE = 'test_data/table_results.csv'
 _IMAGE_FILE = 'test_data/table.jpg'
 _BBOX_IOU_THRESHOLD = 0.9
@@ -36,11 +41,48 @@ class ObjectDetectorTest(unittest.TestCase):
     super().setUp()
     self._load_ground_truth()
     self.image = cv2.imread(_IMAGE_FILE)
+    self.rgb_image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+    self.image = vision.TensorImage.create_from_array(self.rgb_image)
+
+    self._initialize_model()
+    
+  def _initialize_model(self,
+                        max_results: int = 5,
+                        score_threshold: float = 0.0,
+                        label_allow_list: List[str] = None,
+                        label_deny_list: List[str] = None) -> None:
+    base_options = core.BaseOptions(file_name=_MODEL_FILE)
+    detection_options = processor.DetectionOptions(max_results=max_results,
+                                                   score_threshold=score_threshold,
+                                                   class_name_allowlist=label_allow_list,
+                                                   class_name_denylist=label_deny_list)
+    options = vision.ObjectDetectorOptions(base_options=base_options, detection_options=detection_options)
+
+    self._detector = vision.ObjectDetector.create_from_options(options)
+    
+  def _parse(self, detection_results) -> List[Detection]:
+    """Parse the model output into a list of Detection entities."""
+    detections = []
+
+    for detection in detection_results.detections:
+      bounding_box = Rect(
+          top=detection.bounding_box.origin_y,
+          left=detection.bounding_box.origin_x,
+          bottom=detection.bounding_box.origin_y + detection.bounding_box.height,
+          right=detection.bounding_box.origin_x + detection.bounding_box.width)
+      category = Category(
+          score=detection.classes[0].score,
+          label=detection.classes[0].class_name,
+          )
+      result = Detection(bounding_box=bounding_box, categories=[category])
+      detections.append(result)
+      
+    return detections
 
   def test_default_option(self):
     """Check if the default option works correctly."""
-    detector = od.ObjectDetector(_MODEL_FILE)
-    result = detector.detect(self.image)
+    detections = self._detector.detect(self.image)
+    result = self._parse(detections)
 
     # Check if all ground truth detection is found.
     for gt_detection in self._ground_truth_detections:
@@ -62,9 +104,9 @@ class ObjectDetectorTest(unittest.TestCase):
 
   def test_allow_list(self):
     """Test the label_allow_list option."""
-    option = od.ObjectDetectorOptions(label_allow_list=_ALLOW_LIST)
-    detector = od.ObjectDetector(_MODEL_FILE, options=option)
-    result = detector.detect(self.image)
+    self._initialize_model(label_allow_list=_ALLOW_LIST)
+    detections = self._detector.detect(self.image)
+    result = self._parse(detections)
 
     for detection in result:
       label = detection.categories[0].label
@@ -74,9 +116,9 @@ class ObjectDetectorTest(unittest.TestCase):
 
   def test_deny_list(self):
     """Test the label_deny_list option."""
-    option = od.ObjectDetectorOptions(label_deny_list=_DENY_LIST)
-    detector = od.ObjectDetector(_MODEL_FILE, options=option)
-    result = detector.detect(self.image)
+    self._initialize_model(label_deny_list=_DENY_LIST)
+    detections = self._detector.detect(self.image)
+    result = self._parse(detections)
 
     for detection in result:
       label = detection.categories[0].label
@@ -85,9 +127,9 @@ class ObjectDetectorTest(unittest.TestCase):
 
   def test_score_threshold_option(self):
     """Test the score_threshold option."""
-    option = od.ObjectDetectorOptions(score_threshold=_SCORE_THRESHOLD)
-    detector = od.ObjectDetector(_MODEL_FILE, options=option)
-    result = detector.detect(self.image)
+    self._initialize_model(score_threshold=_SCORE_THRESHOLD)
+    detections = self._detector.detect(self.image)
+    result = self._parse(detections)
 
     for detection in result:
       score = detection.categories[0].score
@@ -96,11 +138,11 @@ class ObjectDetectorTest(unittest.TestCase):
           'Detection with score lower than threshold found. {0}'.format(
               detection))
 
-  def test_max_resultsss_option(self):
+  def test_max_results_option(self):
     """Test the max_results option."""
-    option = od.ObjectDetectorOptions(max_results=_MAX_RESULTS)
-    detector = od.ObjectDetector(_MODEL_FILE, options=option)
-    result = detector.detect(self.image)
+    self._initialize_model(max_results=_MAX_RESULTS)
+    detections = self._detector.detect(self.image)
+    result = self._parse(detections)
 
     self.assertLessEqual(
         len(result), _MAX_RESULTS, 'Too many results returned.')
@@ -111,22 +153,20 @@ class ObjectDetectorTest(unittest.TestCase):
     with open(_GROUND_TRUTH_FILE) as f:
       reader = csv.DictReader(f)
       for row in reader:
-        category = od.Category(
+        category = Category(
             label=row['label'],
-            # As we don't care about the category index, we'll just set it to 0.
-            index=0,
             score=float(row['score']))
-        bounding_box = od.Rect(
+        bounding_box = Rect(
             left=float(row['left']),
             top=float(row['top']),
             right=float(row['right']),
             bottom=float(row['bottom']),
         )
-        detection = od.Detection(
+        detection = Detection(
             bounding_box=bounding_box, categories=[category])
         self._ground_truth_detections.append(detection)
 
-  def _iou(self, rect1: od.Rect, rect2: od.Rect):
+  def _iou(self, rect1: Rect, rect2: Rect):
     """Calculate the Intersection over Union ratio of 2 given rectangles."""
     # Determine the the intersection rectangle
     x_min = max(rect1.left, rect2.left)
@@ -152,8 +192,8 @@ class ObjectDetectorTest(unittest.TestCase):
 
   def _create_groud_truth_csv(self, output_file=_GROUND_TRUTH_FILE):
     """A util function to recreate the ground truth result."""
-    detector = od.ObjectDetector(_MODEL_FILE)
-    result = detector.detect(self.image)
+    detections = self._detector.detect(self.image)
+    result = self._parse(detections)
     with open(output_file, 'w') as f:
       header = ['label', 'left', 'top', 'right', 'bottom', 'score']
       writer = csv.DictWriter(f, fieldnames=header)
