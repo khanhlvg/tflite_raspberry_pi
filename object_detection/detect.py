@@ -15,7 +15,7 @@
 import argparse
 import sys
 import time
-from typing import List, NamedTuple
+
 import cv2
 
 from tflite_support.task import vision
@@ -23,26 +23,6 @@ from tflite_support.task import core
 from tflite_support.task import processor
 
 import utils
-
-class Rect(NamedTuple):
-  """A rectangle in 2D space."""
-  left: float
-  top: float
-  right: float
-  bottom: float
-
-
-class Category(NamedTuple):
-  """A result of a classification task."""
-  label: str
-  score: float
-  
-
-class Detection(NamedTuple):
-  """A detected object as the result of an ObjectDetector."""
-  bounding_box: Rect
-  categories: List[Category]
-
 
 def run(model: str, camera_id: int, width: int, height: int,
         max_results: int, score_threshold: float,
@@ -104,24 +84,9 @@ def run(model: str, camera_id: int, width: int, height: int,
     rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     tensor_image = vision.TensorImage.create_from_array(rgb_image)
     detection_results = detector.detect(tensor_image)
-    
-    detections = []
-    # Parse the model output into a list of Detection entities.
-    for detection in detection_results.detections:
-      bounding_box = Rect(
-          top=detection.bounding_box.origin_y,
-          left=detection.bounding_box.origin_x,
-          bottom=detection.bounding_box.origin_y + detection.bounding_box.height,
-          right=detection.bounding_box.origin_x + detection.bounding_box.width)
-      category = Category(
-          score=detection.classes[0].score,
-          label=detection.classes[0].class_name,
-          )
-      result = Detection(bounding_box=bounding_box, categories=[category])
-      detections.append(result)
 
     # Draw keypoints and edges on input image
-    image = utils.visualize(image, detections)
+    image = utils.visualize(image, detection_results)
 
     # Calculate the FPS
     if counter % fps_avg_frame_count == 0:

@@ -16,8 +16,8 @@
 from typing import List
 
 import cv2
-from detect import Detection
 import numpy as np
+from tflite_support.task.processor import DetectionResult
 
 _MARGIN = 10  # pixels
 _ROW_SIZE = 10  # pixels
@@ -28,27 +28,28 @@ _TEXT_COLOR = (0, 0, 255)  # red
 
 def visualize(
     image: np.ndarray,
-    detections: List[Detection],
+    detection_results: DetectionResult,
 ) -> np.ndarray:
   """Draws bounding boxes on the input image and return it.
   Args:
     image: The input RGB image.
-    detections: The list of all "Detection" entities to be visualize.
+    detections: The list of all "DetectionResults" entities to be visualize.
   Returns:
     Image with bounding boxes.
   """
-  for detection in detections:
+  for detection in detection_results.detections:
     # Draw bounding_box
-    start_point = detection.bounding_box.left, detection.bounding_box.top
-    end_point = detection.bounding_box.right, detection.bounding_box.bottom
+    bbox = detection.bounding_box
+    start_point = (bbox.origin_x, bbox.origin_y)
+    end_point = (bbox.origin_x + bbox.width,
+                 bbox.origin_y + bbox.height)
     cv2.rectangle(image, start_point, end_point, _TEXT_COLOR, 3)
 
     # Draw label and score
-    category = detection.categories[0]
-    class_name = category.label
-    probability = round(category.score, 2)
+    class_name = detection.classes[0].class_name
+    probability = round(detection.classes[0].score, 2)
     result_text = class_name + ' (' + str(probability) + ')'
-    text_location = (_MARGIN + detection.bounding_box.left, _MARGIN + _ROW_SIZE + detection.bounding_box.top)
+    text_location = (_MARGIN + bbox.origin_x, _MARGIN + _ROW_SIZE + bbox.origin_y)
     cv2.putText(image, result_text, text_location, cv2.FONT_HERSHEY_PLAIN,
                 _FONT_SIZE, _TEXT_COLOR, _FONT_THICKNESS)
 
