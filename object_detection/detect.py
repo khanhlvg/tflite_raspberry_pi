@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Main script to run pose classification and pose estimation."""
+"""Main script to run object detection."""
 import argparse
 import sys
 import time
@@ -68,6 +68,7 @@ def run(model: str, camera_id: int, width: int, height: int,
     start_time_frame = time.time()
 
     start_time = time.time()
+    print(cap.read())
     success, image = cap.read()
     if not success:
       sys.exit(
@@ -76,7 +77,9 @@ def run(model: str, camera_id: int, width: int, height: int,
 
     counter += 1
     image = cv2.flip(image, 1)
-    input_tensor = vision.TensorImage.create_from_array(image)
+    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    print(rgb_image.shape, rgb_image.dtype)
+    input_tensor = vision.TensorImage.create_from_array(rgb_image)
     elapsed_time = int((time.time() - start_time) * 1000)
     print('OpenCV read image time: {0}ms'.format(elapsed_time))
 

@@ -13,8 +13,6 @@
 # limitations under the License.
 """Utility functions to display the pose detection results."""
 
-from typing import List
-
 import cv2
 import numpy as np
 from tflite_support.task.processor import DetectionResult
